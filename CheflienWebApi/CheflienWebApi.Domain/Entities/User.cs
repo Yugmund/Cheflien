@@ -4,7 +4,7 @@ namespace CheflienWebApi.Domain.Entities;
 
 public class User : IdentityUser
 {
-    public string? ExternalId { get; set; }
-    public string? SystemId { get; set; }
     public IList<IdentityUserRole<string>> UserRoles { get; set; }
+    public IList<Alergie> Alergies { get; set; }
+    public IList<Recipe> Recipes { get; set; }
 }

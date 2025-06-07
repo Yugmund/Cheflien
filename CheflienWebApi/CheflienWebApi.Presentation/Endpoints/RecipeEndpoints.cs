@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using CheflienWebApi.Application.Recipes.DTOs;
 using CheflienWebApi.Application.Recipes.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -15,9 +16,11 @@ public static class RecipeEndpoints
         group.MapGet("/{id:guid}", async (
             Guid id,
             IRecipeService recipeService,
+            ClaimsPrincipal user,
             CancellationToken cancellationToken) =>
         {
-            var recipe = await recipeService.GetByIdAsync(id);
+            var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+            var recipe = await recipeService.GetByIdAsync(id, userId);
             return recipe == null ? Results.NotFound() : Results.Ok(recipe);
         })
         .WithName("GetRecipeById")

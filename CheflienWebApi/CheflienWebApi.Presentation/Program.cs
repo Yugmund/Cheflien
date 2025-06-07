@@ -116,6 +116,7 @@ builder.Services.AddScoped<IAlergieRepository, AlergieRepository>();
 builder.Services.AddScoped<IAlergieService, AlergieService>();
 builder.Services.AddScoped<IRecipeRepository, RecipeRepository>();
 builder.Services.AddScoped<IRecipeService, RecipeService>();
+builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 

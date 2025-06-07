@@ -1,23 +1,33 @@
 using CheflienWebApi.Application.Recipes.DTOs;
 using CheflienWebApi.Application.Recipes.Interfaces;
-using CheflienWebApi.Domain.Entities;
+using CheflienWebApi.Application.UserProfileUpdate.Interfaces;
+using Microsoft.AspNetCore.Http;
 
 namespace CheflienWebApi.Application.Recipes.Services;
 
-public class RecipeService(IRecipeRepository recipeRepository) : IRecipeService
+public class RecipeService(
+    IRecipeRepository recipeRepository,
+    IUserRepository userRepository)
+    : IRecipeService
 {
-    public async Task<RecipeResponseDto?> GetByIdAsync(Guid id)
+    public async Task<RecipeResponseDto?> GetByIdAsync(Guid id, string? userId)
     {
         var recipe = await recipeRepository.GetByIdAsync(id);
-        return recipe == null ? null : MapToDto(recipe);
+        if (recipe == null)
+            return null;
+
+        var userAlergies = await GetUserAlergiesAsync(userId);
+        return MapToDto(recipe, userAlergies);
     }
 
     public async Task<PaginatedResultDto<RecipeDto>> GetFilteredAsync(
         RecipeFilterDto filter,
         int pageNumber = 1,
-        int pageSize = 10)
+        int pageSize = 10,
+        string? userId = null)
     {
         var (items, totalCount) = await recipeRepository.GetFilteredAsync(filter, pageNumber, pageSize);
+        var userAlergies = await GetUserAlergiesAsync(userId);
         
         var recipes = items.Select(r => new RecipeDto
         {
@@ -59,7 +69,7 @@ public class RecipeService(IRecipeRepository recipeRepository) : IRecipeService
         };
     }
 
-    private static RecipeResponseDto MapToDto(Domain.Entities.Recipe recipe)
+    private static RecipeResponseDto MapToDto(Domain.Entities.Recipe recipe, IList<Guid>? userAlergies)
     {
         return new RecipeResponseDto
         {
@@ -74,13 +84,30 @@ public class RecipeService(IRecipeRepository recipeRepository) : IRecipeService
                 Id = i.Ingredient.Id,
                 Name = i.Ingredient.Name,
                 Measuring = i.Measuring,
-                Alergies = i.Ingredient.Alergies.Select(a => new AlergieDto
-                {
-                    Id = a.Id,
-                    Name = a.Name,
-                    Description = a.Description
-                }).ToList()
+                Alergies = userAlergies == null 
+                    ? i.Ingredient.Alergies.Select(a => new AlergieDto
+                    {
+                        Id = a.Id,
+                        Name = a.Name,
+                        Description = a.Description
+                    }).ToList()
+                    : i.Ingredient.Alergies
+                        .Where(a => userAlergies.Contains(a.Id))
+                        .Select(a => new AlergieDto
+                        {
+                            Id = a.Id,
+                            Name = a.Name,
+                            Description = a.Description
+                        }).ToList()
             }).ToList()
         };
+    }
+
+    private async Task<IList<Guid>?> GetUserAlergiesAsync(string? userId)
+    {
+        if (userId == null)
+            return null;
+        var userAlergies = await userRepository.GetUserAlergiesAsync(userId);
+        return userAlergies.Select(a => a.Id).ToList();
     }
 } 

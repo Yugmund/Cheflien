@@ -6,14 +6,30 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CheflienWebApi.Infrastructure.Repositories;
 
-public class RecipeRepository(ApplicationDbContext context) : IRecipeRepository
+public class RecipeRepository : IRecipeRepository
 {
+    private readonly ApplicationDbContext _context;
+
+    public RecipeRepository(ApplicationDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<Recipe?> GetByIdAsync(Guid id)
+    {
+        return await _context.Recipes
+            .Include(r => r.Ingredients)
+                .ThenInclude(i => i.Ingredient)
+                    .ThenInclude(i => i.Alergies)
+            .FirstOrDefaultAsync(r => r.Id == id);
+    }
+
     public async Task<(IList<Recipe> Items, int TotalCount)> GetFilteredAsync(
         RecipeFilterDto filter,
         int pageNumber,
         int pageSize)
     {
-        var query = context.Recipes
+        var query = _context.Recipes
             .Include(r => r.Ingredients)
                 .ThenInclude(i => i.Ingredient)
                     .ThenInclude(i => i.Alergies)

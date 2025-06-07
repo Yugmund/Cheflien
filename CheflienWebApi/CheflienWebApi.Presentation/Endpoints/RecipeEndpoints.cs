@@ -12,6 +12,19 @@ public static class RecipeEndpoints
             .WithTags("Recipes")
             .WithOpenApi();
 
+        group.MapGet("/{id:guid}", async (
+            Guid id,
+            IRecipeService recipeService,
+            CancellationToken cancellationToken) =>
+        {
+            var recipe = await recipeService.GetByIdAsync(id);
+            return recipe == null ? Results.NotFound() : Results.Ok(recipe);
+        })
+        .WithName("GetRecipeById")
+        .WithSummary("Get recipe by ID")
+        .Produces<RecipeResponseDto>(StatusCodes.Status200OK)
+        .Produces(StatusCodes.Status404NotFound);
+
         group.MapGet("/", async (
             [FromQuery] string? searchTerm,
             [FromQuery] string? ingredientIds,

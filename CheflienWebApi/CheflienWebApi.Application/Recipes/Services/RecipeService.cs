@@ -1,10 +1,17 @@
 using CheflienWebApi.Application.Recipes.DTOs;
 using CheflienWebApi.Application.Recipes.Interfaces;
+using CheflienWebApi.Domain.Entities;
 
 namespace CheflienWebApi.Application.Recipes.Services;
 
 public class RecipeService(IRecipeRepository recipeRepository) : IRecipeService
 {
+    public async Task<RecipeResponseDto?> GetByIdAsync(Guid id)
+    {
+        var recipe = await recipeRepository.GetByIdAsync(id);
+        return recipe == null ? null : MapToDto(recipe);
+    }
+
     public async Task<PaginatedResultDto<RecipeDto>> GetFilteredAsync(
         RecipeFilterDto filter,
         int pageNumber = 1,
@@ -49,6 +56,31 @@ public class RecipeService(IRecipeRepository recipeRepository) : IRecipeService
             TotalPages = totalPages,
             HasPreviousPage = pageNumber > 1,
             HasNextPage = pageNumber < totalPages
+        };
+    }
+
+    private static RecipeResponseDto MapToDto(Domain.Entities.Recipe recipe)
+    {
+        return new RecipeResponseDto
+        {
+            Id = recipe.Id,
+            Name = recipe.Name,
+            Description = recipe.Description,
+            Steps = recipe.Steps,
+            CookingTime = recipe.CookingTime,
+            Servings = recipe.Servings,
+            Ingredients = recipe.Ingredients.Select(i => new IngredientInRecipeDto
+            {
+                Id = i.Ingredient.Id,
+                Name = i.Ingredient.Name,
+                Measuring = i.Measuring,
+                Alergies = i.Ingredient.Alergies.Select(a => new AlergieDto
+                {
+                    Id = a.Id,
+                    Name = a.Name,
+                    Description = a.Description
+                }).ToList()
+            }).ToList()
         };
     }
 } 

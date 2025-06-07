@@ -21,13 +21,6 @@ public class IngredientDto
     public string Description { get; set; }
 }
 
-public class AlergieDto
-{
-    public Guid Id { get; set; }
-    public string Name { get; set; }
-    public string Description { get; set; }
-}
-
 public class RecipeFilterDto
 {
     public string? SearchTerm { get; set; }

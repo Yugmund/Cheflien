@@ -17,6 +17,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\CheflienWebApi.Application\CheflienWebApi.Application.csproj" />
       <ProjectReference Include="..\CheflienWebApi.Domain\CheflienWebApi.Domain.csproj" />
     </ItemGroup>
 

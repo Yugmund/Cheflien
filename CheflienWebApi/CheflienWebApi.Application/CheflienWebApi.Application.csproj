@@ -17,4 +17,8 @@
       <ProjectReference Include="..\CheflienWebApi.Domain\CheflienWebApi.Domain.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="UserProfileUpdate\" />
+    </ItemGroup>
+
 </Project>

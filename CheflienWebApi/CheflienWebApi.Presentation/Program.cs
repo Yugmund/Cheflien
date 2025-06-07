@@ -1,3 +1,4 @@
+using System.Text;
 using BookingWebApi.Application.Authorization.Wrappers;
 using BookingWebApi.Application.Jwts;
 using CheflienWebApi.Application.Authorization.Jwts;
@@ -5,12 +6,19 @@ using CheflienWebApi.Application.Authorization.Services;
 using CheflienWebApi.Application.Authorization.Seeders;
 using CheflienWebApi.Application.Authorization.Validators;
 using CheflienWebApi.Application.Authorization.Wrappers;
+using CheflienWebApi.Application.UserProfileUpdate.Interfaces;
+using CheflienWebApi.Application.UserProfileUpdate.Services;
 using CheflienWebApi.Domain.Entities;
+using CheflienWebApi.Infrastructure.Data.Seeders;
 using CheflienWebApi.Infrastructure.DbContexts;
+using CheflienWebApi.Infrastructure.Repositories;
+using CheflienWebApi.Presentation.Endpoints;
 using CheflienWebApi.Presentation.Extensions;
 using FluentValidation;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -60,6 +68,28 @@ builder.Services.AddIdentity<User, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
+// Add authorization services
+builder.Services.AddAuthorization(); 
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(o =>
+{
+    o.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
+        ValidAudience = builder.Configuration["JwtSettings:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey
+            (Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:SecretKey"])),
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = false,
+        ValidateIssuerSigningKey = true
+    };
+});
+
 builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
 builder.Services.AddScoped<IUserManagerWrapper, UserManagerWrapper>();
 builder.Services.AddScoped<IRoleManagerWrapper, RoleManagerWrapper>();
@@ -68,7 +98,14 @@ builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSet
 builder.Services.AddScoped<RoleSeeder>();
 builder.Services.AddValidatorsFromAssemblyContaining<RegisterDtoValidator>();
 
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IUserProfileService, UserProfileService>();
+
 var app = builder.Build();
+
+// Add authentication and authorization middleware
+app.UseAuthentication();
+app.UseAuthorization();
 
 if (app.Environment.IsDevelopment())
 {
@@ -84,9 +121,21 @@ using (var scope = app.Services.CreateScope())
 {
     var roleSeeder = scope.ServiceProvider.GetRequiredService<RoleSeeder>();
     await roleSeeder.SeedRolesAsync();
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<ApplicationDbContext>();
+        await DatabaseSeeder.SeedDataAsync(context);
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while seeding the database.");
+    }
 }
 
 app.MapAuthorizationEndpoints();
+app.MapUserProfileEndpoints();
 
 app.UseHttpsRedirection();
 

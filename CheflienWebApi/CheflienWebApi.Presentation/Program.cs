@@ -8,6 +8,8 @@ using CheflienWebApi.Application.Authorization.Services;
 using CheflienWebApi.Application.Authorization.Seeders;
 using CheflienWebApi.Application.Authorization.Validators;
 using CheflienWebApi.Application.Authorization.Wrappers;
+using CheflienWebApi.Application.Recipes.Interfaces;
+using CheflienWebApi.Application.Recipes.Services;
 using CheflienWebApi.Application.UserProfileUpdate.Interfaces;
 using CheflienWebApi.Application.UserProfileUpdate.Services;
 using CheflienWebApi.Domain.Entities;
@@ -112,6 +114,8 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserProfileService, UserProfileService>();
 builder.Services.AddScoped<IAlergieRepository, AlergieRepository>();
 builder.Services.AddScoped<IAlergieService, AlergieService>();
+builder.Services.AddScoped<IRecipeRepository, RecipeRepository>();
+builder.Services.AddScoped<IRecipeService, RecipeService>();
 
 var app = builder.Build();
 
@@ -137,6 +141,7 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
+        context.Database.Migrate();
         await DatabaseSeeder.SeedDataAsync(context);
     }
     catch (Exception ex)
@@ -149,6 +154,7 @@ using (var scope = app.Services.CreateScope())
 app.MapAuthorizationEndpoints();
 app.MapUserProfileEndpoints();
 app.MapAlergieEndpoints();
+app.MapRecipeEndpoints();
 
 app.UseHttpsRedirection();
 

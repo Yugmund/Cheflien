@@ -65,6 +65,31 @@ public static class DatabaseSeeder
 
         await context.Ingredients.AddRangeAsync(ingredients);
         await context.SaveChangesAsync();
+
+        // Add ingredient-allergy connections
+        var ingredientAllergies = new Dictionary<string, string[]>
+        {
+            { "Flour", new[] { "Gluten" } },
+            { "Bread", new[] { "Gluten" } },
+            { "Pasta", new[] { "Gluten" } },
+            { "Milk", new[] { "Lactose" } },
+            { "Cheese", new[] { "Lactose" } },
+            { "Butter", new[] { "Lactose" } },
+            { "Eggs", new[] { "Eggs" } },
+            { "Chicken", new[] { "Eggs" } } // Some chicken products might contain eggs
+        };
+
+        foreach (var (ingredientName, allergyNames) in ingredientAllergies)
+        {
+            var ingredient = await context.Ingredients.FirstAsync(i => i.Name == ingredientName);
+            var allergies = await context.Alergies
+                .Where(a => allergyNames.Contains(a.Name))
+                .ToListAsync();
+
+            ingredient.Alergies = allergies;
+        }
+
+        await context.SaveChangesAsync();
     }
 
     private static async Task SeedRecipesAsync(ApplicationDbContext context)

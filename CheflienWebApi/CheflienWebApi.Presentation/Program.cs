@@ -1,6 +1,8 @@
 using System.Text;
 using BookingWebApi.Application.Authorization.Wrappers;
 using BookingWebApi.Application.Jwts;
+using CheflienWebApi.Application.Alergies.Interfaces;
+using CheflienWebApi.Application.Alergies.Services;
 using CheflienWebApi.Application.Authorization.Jwts;
 using CheflienWebApi.Application.Authorization.Services;
 using CheflienWebApi.Application.Authorization.Seeders;
@@ -20,6 +22,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -58,6 +61,13 @@ builder.Services.AddSwaggerGen(c =>
             },
             Array.Empty<string>()
         }
+    });
+
+    // Add custom schema ID generator
+    c.CustomSchemaIds(type =>
+    {
+        if (type.FullName == null) return type.Name;
+        return type.FullName.Replace("+", "_").Replace(".", "_");
     });
 });
 
@@ -100,6 +110,8 @@ builder.Services.AddValidatorsFromAssemblyContaining<RegisterDtoValidator>();
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserProfileService, UserProfileService>();
+builder.Services.AddScoped<IAlergieRepository, AlergieRepository>();
+builder.Services.AddScoped<IAlergieService, AlergieService>();
 
 var app = builder.Build();
 
@@ -136,6 +148,7 @@ using (var scope = app.Services.CreateScope())
 
 app.MapAuthorizationEndpoints();
 app.MapUserProfileEndpoints();
+app.MapAlergieEndpoints();
 
 app.UseHttpsRedirection();
 

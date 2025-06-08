@@ -3,6 +3,7 @@ using System;
 using CheflienWebApi.Infrastructure.DbContexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CheeflienWebApi.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250605201025_EntitiesCreate")]
+    partial class EntitiesCreate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -35,6 +38,21 @@ namespace CheeflienWebApi.Infrastructure.Migrations
                     b.HasIndex("IngredientsId");
 
                     b.ToTable("AlergieIngredients", (string)null);
+                });
+
+            modelBuilder.Entity("AlergieRecipe", b =>
+                {
+                    b.Property<Guid>("AlergiesId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("RecipesId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("AlergiesId", "RecipesId");
+
+                    b.HasIndex("RecipesId");
+
+                    b.ToTable("RecipeAlergies", (string)null);
                 });
 
             modelBuilder.Entity("AlergieUser", b =>
@@ -171,6 +189,9 @@ namespace CheeflienWebApi.Infrastructure.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("ExternalId")
+                        .HasColumnType("text");
+
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("boolean");
 
@@ -195,6 +216,9 @@ namespace CheeflienWebApi.Infrastructure.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<string>("SecurityStamp")
+                        .HasColumnType("text");
+
+                    b.Property<string>("SystemId")
                         .HasColumnType("text");
 
                     b.Property<bool>("TwoFactorEnabled")
@@ -382,6 +406,21 @@ namespace CheeflienWebApi.Infrastructure.Migrations
                     b.HasOne("CheflienWebApi.Domain.Entities.Ingredient", null)
                         .WithMany()
                         .HasForeignKey("IngredientsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("AlergieRecipe", b =>
+                {
+                    b.HasOne("CheflienWebApi.Domain.Entities.Alergie", null)
+                        .WithMany()
+                        .HasForeignKey("AlergiesId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CheflienWebApi.Domain.Entities.Recipe", null)
+                        .WithMany()
+                        .HasForeignKey("RecipesId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

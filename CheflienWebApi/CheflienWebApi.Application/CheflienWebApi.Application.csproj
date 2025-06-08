@@ -17,4 +17,9 @@
       <ProjectReference Include="..\CheflienWebApi.Domain\CheflienWebApi.Domain.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Alergies\" />
+      <Folder Include="UserProfileUpdate\" />
+    </ItemGroup>
+
 </Project>

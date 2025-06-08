@@ -8,6 +8,8 @@ using CheflienWebApi.Application.Authorization.Services;
 using CheflienWebApi.Application.Authorization.Seeders;
 using CheflienWebApi.Application.Authorization.Validators;
 using CheflienWebApi.Application.Authorization.Wrappers;
+using CheflienWebApi.Application.Recommendations.Interfaces;
+using CheflienWebApi.Application.Recommendations.Services;
 using CheflienWebApi.Application.Recipes.Interfaces;
 using CheflienWebApi.Application.Recipes.Services;
 using CheflienWebApi.Application.UserProfileUpdate.Interfaces;
@@ -116,6 +118,7 @@ builder.Services.AddScoped<IAlergieRepository, AlergieRepository>();
 builder.Services.AddScoped<IAlergieService, AlergieService>();
 builder.Services.AddScoped<IRecipeRepository, RecipeRepository>();
 builder.Services.AddScoped<IRecipeService, RecipeService>();
+builder.Services.AddScoped<IRecommendationService, RecommendationService>();
 builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
@@ -156,6 +159,7 @@ app.MapAuthorizationEndpoints();
 app.MapUserProfileEndpoints();
 app.MapAlergieEndpoints();
 app.MapRecipeEndpoints();
+app.MapRecommendationEndpoints();
 
 app.UseHttpsRedirection();
 

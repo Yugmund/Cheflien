@@ -1,7 +1,8 @@
 using CheflienWebApi.Application.Recipes.DTOs;
 using CheflienWebApi.Application.UserProfileUpdate.DTOs;
 using CheflienWebApi.Application.UserProfileUpdate.Interfaces;
-using AlergieDto = CheflienWebApi.Application.UserProfileUpdate.DTOs.AlergieDto;
+using CheflienWebApi.Domain.Entities;
+using AlergieDto = CheflienWebApi.Application.Recipes.DTOs.AlergieDto;
 
 namespace CheflienWebApi.Application.UserProfileUpdate.Services;
 
@@ -19,7 +20,7 @@ public class UserProfileService(IUserRepository userRepository) : IUserProfileSe
             UserName = user.UserName,
             Email = user.Email,
             PhoneNumber = user.PhoneNumber,
-            Alergies = user.Alergies.Select(a => new AlergieDto
+            Alergies = user.Alergies.Select(a => new DTOs.AlergieDto
             {
                 Id = a.Id,
                 Name = a.Name,
@@ -71,13 +72,13 @@ public class UserProfileService(IUserRepository userRepository) : IUserProfileSe
                 .SelectMany(i => i.Ingredient.Alergies)
                 .Where(a => userAlergieIds.Contains(a.Id))
                 .DistinctBy(a => a.Id)
-                .Select(a => new AlergieDto
+                .Select<Alergie, AlergieDto>(a => new AlergieDto
                 {
                     Id = a.Id,
                     Name = a.Name,
                     Description = a.Description
                 })
-                .ToList()
+                .ToList<AlergieDto>()
         }).ToList();
     }
 }

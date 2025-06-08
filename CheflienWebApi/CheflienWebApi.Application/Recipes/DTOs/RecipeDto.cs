@@ -10,8 +10,8 @@ public class RecipeDto
     public string Steps { get; set; }
     public string CookingTime { get; set; }
     public int Servings { get; set; }
-    public IList<IngredientDto> Ingredients { get; set; }
-    public IList<AlergieDto> Alergies { get; set; }
+    public List<IngredientDto> Ingredients { get; set; }
+    public List<AlergieDto> Alergies { get; set; }
 }
 
 public class IngredientDto

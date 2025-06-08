@@ -43,16 +43,28 @@ public class RecipeService(
                 Name = i.Ingredient.Name,
                 Description = i.Ingredient.Description
             }).ToList(),
-            Alergies = r.Ingredients
-                .SelectMany(i => i.Ingredient.Alergies)
-                .DistinctBy(a => a.Id)
-                .Select(a => new AlergieDto
-                {
-                    Id = a.Id,
-                    Name = a.Name,
-                    Description = a.Description
-                })
-                .ToList()
+            Alergies = userAlergies == null 
+                ? r.Ingredients
+                    .SelectMany(i => i.Ingredient.Alergies)
+                    .DistinctBy(a => a.Id)
+                    .Select(a => new AlergieDto
+                    {
+                        Id = a.Id,
+                        Name = a.Name,
+                        Description = a.Description
+                    })
+                    .ToList()
+                : r.Ingredients
+                    .SelectMany(i => i.Ingredient.Alergies)
+                    .Where(a => userAlergies.Contains(a.Id))
+                    .DistinctBy(a => a.Id)
+                    .Select(a => new AlergieDto
+                    {
+                        Id = a.Id,
+                        Name = a.Name,
+                        Description = a.Description
+                    })
+                    .ToList()
         }).ToList();
 
         var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);

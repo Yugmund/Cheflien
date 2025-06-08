@@ -35,7 +35,8 @@ public static class RecipeEndpoints
             [FromQuery] int? maxServings,
             [FromQuery] int pageNumber,
             [FromQuery] int pageSize,
-            IRecipeService recipeService) =>
+            IRecipeService recipeService,
+            ClaimsPrincipal user) =>
         {
             try
             {
@@ -49,7 +50,8 @@ public static class RecipeEndpoints
                     MaxServings = maxServings
                 };
 
-                var recipes = await recipeService.GetFilteredAsync(filter, pageNumber, pageSize);
+                var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+                var recipes = await recipeService.GetFilteredAsync(filter, pageNumber, pageSize, userId);
                 return Results.Ok(recipes);
             }
             catch (Exception ex)

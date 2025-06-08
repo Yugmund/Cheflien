@@ -9,4 +9,6 @@ public interface IUserRepository
     Task UpdateAsync(User user);
     Task<IList<Alergie>> GetUserAlergiesAsync(string userId);
     Task UpdateUserAlergiesAsync(string userId, IList<Guid> alergieIds);
+    Task LikeRecipeAsync(string userId, Guid recipeId);
+    Task<IList<Recipe>> GetFavoriteRecipesAsync(string userId);
 } 

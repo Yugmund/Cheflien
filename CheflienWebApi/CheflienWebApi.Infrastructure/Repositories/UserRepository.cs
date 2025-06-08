@@ -48,24 +48,43 @@ public class UserRepository(UserManager<User> userManager, ApplicationDbContext 
             .Where(a => alergieIds.Contains(a.Id))
             .ToListAsync();
 
-        // Remove alergies that are not in the new list
-        foreach (var alergie in currentAlergies)
-        {
-            if (!alergieIds.Contains(alergie.Id))
-            {
-                user.Alergies.Remove(alergie);
-            }
-        }
-
-        // Add new alergies
+        user.Alergies.Clear();
         foreach (var alergie in alergiesToAdd)
         {
-            if (!currentAlergies.Any(a => a.Id == alergie.Id))
-            {
-                user.Alergies.Add(alergie);
-            }
+            user.Alergies.Add(alergie);
         }
 
         await context.SaveChangesAsync();
+    }
+
+    public async Task LikeRecipeAsync(string userId, Guid recipeId)
+    {
+        var user = await context.Users
+            .Include(u => u.Recipes)
+            .FirstOrDefaultAsync(u => u.Id == userId);
+
+        if (user == null)
+            throw new KeyNotFoundException($"User with ID {userId} not found.");
+
+        var recipe = await context.Recipes.FindAsync(recipeId);
+        if (recipe == null)
+            throw new KeyNotFoundException($"Recipe with ID {recipeId} not found.");
+
+        if (!user.Recipes.Contains(recipe))
+        {
+            user.Recipes.Add(recipe);
+            await context.SaveChangesAsync();
+        }
+    }
+
+    public async Task<IList<Recipe>> GetFavoriteRecipesAsync(string userId)
+    {
+        return await context.Users
+            .Where(u => u.Id == userId)
+            .SelectMany(u => u.Recipes)
+            .Include(r => r.Ingredients)
+                .ThenInclude(i => i.Ingredient)
+                    .ThenInclude(i => i.Alergies)
+            .ToListAsync();
     }
 } 

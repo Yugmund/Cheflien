@@ -1,9 +1,7 @@
 using CheflienWebApi.Application.UserProfileUpdate.DTOs;
 using CheflienWebApi.Application.UserProfileUpdate.Interfaces;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
+using CheflienWebApi.Application.Recipes.DTOs;
 
 namespace CheflienWebApi.Presentation.Endpoints;
 
@@ -28,55 +26,35 @@ public static class UserProfileEndpoints
             ClaimsPrincipal user) =>
         {
             var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userId))
+            if (userId == null)
                 return Results.Unauthorized();
 
-            try
-            {
-                var profile = await userProfileService.GetUserProfileAsync(userId);
-                return Results.Ok(profile);
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem(
-                    title: "An error occurred while retrieving the user profile",
-                    detail: ex.Message,
-                    statusCode: StatusCodes.Status400BadRequest);
-            }
+            var profile = await userProfileService.GetByIdAsync(userId);
+            return profile == null ? Results.NotFound() : Results.Ok(profile);
         })
         .WithName("GetUserProfile")
         .WithSummary("Get current user profile")
-        .WithDescription("Retrieves the profile information for the currently authenticated user")
         .Produces<UserProfileDto>()
-        .Produces(StatusCodes.Status400BadRequest)
         .Produces(StatusCodes.Status401Unauthorized)
-        .Produces(StatusCodes.Status403Forbidden);
+        .Produces(StatusCodes.Status404NotFound);
 
         group.MapPut("/", async (
-            [FromBody] UpdateUserProfileDto updateDto,
+            UpdateUserProfileDto dto,
             IUserProfileService userProfileService,
             ClaimsPrincipal user) =>
         {
             var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userId))
+            if (userId == null)
                 return Results.Unauthorized();
 
             try
             {
-                var updatedProfile = await userProfileService.UpdateUserProfileAsync(userId, updateDto);
-                return Results.Ok(updatedProfile);
+                await userProfileService.UpdateAsync(userId, dto);
+                return Results.NoContent();
             }
-            // catch (KeyNotFoundException)
-            // {
-            //     return Results.BadRequest(new { Message = "User profile not found" });
-            // }
-            catch (InvalidOperationException ex)
+            catch (KeyNotFoundException ex)
             {
-                return Results.BadRequest(new { ex.Message });
-            }
-            catch (ValidationException ex)
-            {
-                return Results.BadRequest(new { ex.Message });
+                return Results.NotFound(new { message = ex.Message });
             }
             catch (Exception ex)
             {
@@ -88,11 +66,70 @@ public static class UserProfileEndpoints
         })
         .WithName("UpdateUserProfile")
         .WithSummary("Update current user profile")
-        .WithDescription("Updates the profile information for the currently authenticated user")
-        .Accepts<UpdateUserProfileDto>("application/json")
-        .Produces<UserProfileDto>()
+        .Produces(StatusCodes.Status204NoContent)
         .Produces(StatusCodes.Status400BadRequest)
         .Produces(StatusCodes.Status401Unauthorized)
-        .Produces(StatusCodes.Status403Forbidden);
+        .Produces(StatusCodes.Status404NotFound);
+
+        group.MapPost("/recipes/{recipeId:guid}/like", async (
+            Guid recipeId,
+            IUserProfileService userProfileService,
+            ClaimsPrincipal user) =>
+        {
+            var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null)
+                return Results.Unauthorized();
+
+            try
+            {
+                await userProfileService.LikeRecipeAsync(userId, recipeId);
+                return Results.NoContent();
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return Results.NotFound(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem(
+                    title: "An error occurred while liking the recipe",
+                    detail: ex.Message,
+                    statusCode: StatusCodes.Status400BadRequest);
+            }
+        })
+        .WithName("LikeRecipe")
+        .WithSummary("Like a recipe")
+        .Produces(StatusCodes.Status204NoContent)
+        .Produces(StatusCodes.Status400BadRequest)
+        .Produces(StatusCodes.Status401Unauthorized)
+        .Produces(StatusCodes.Status404NotFound);
+
+        group.MapGet("/recipes/favorites", async (
+            IUserProfileService userProfileService,
+            ClaimsPrincipal user) =>
+        {
+            var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null)
+                return Results.Unauthorized();
+
+            try
+            {
+                var recipes = await userProfileService.GetFavoriteRecipesAsync(userId);
+                return Results.Ok(recipes);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem(
+                    title: "An error occurred while retrieving favorite recipes",
+                    detail: ex.Message,
+                    statusCode: StatusCodes.Status400BadRequest);
+            }
+        })
+        .WithName("GetFavoriteRecipes")
+        .WithSummary("Get user's favorite recipes")
+        .Produces<IList<RecipeDto>>(StatusCodes.Status200OK)
+        .Produces(StatusCodes.Status400BadRequest)
+        .Produces(StatusCodes.Status401Unauthorized)
+        .RequireAuthorization();
     }
 } 

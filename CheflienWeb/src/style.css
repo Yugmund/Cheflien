@@ -1,0 +1,12 @@
+@import 'vuetify/styles';
+
+:root {
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.v-application {
+  font-family: 'Roboto', sans-serif;
+}
